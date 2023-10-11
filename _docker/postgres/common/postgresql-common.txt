@@ -1,0 +1,10 @@
+/var/log/postgresql/*.log {
+       monthly
+       rotate 6
+       copytruncate
+       compress
+       delaycompress
+       notifempty
+       missingok
+       su root root
+}

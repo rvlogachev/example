@@ -1,0 +1,2 @@
+29 15 * * * echo $(date +\%Y\%m\%d\%H\%M\%S). " - Throughout one min php yii ldap/import-users can be started." >> /var/log/cron.log
+30 15 * * * /usr/local/bin/php /app/yii ldap/import-users
