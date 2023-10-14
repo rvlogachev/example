@@ -10,7 +10,8 @@ services:
             - ./_docker/nginx/nginx.conf:/etc/nginx/nginx.conf
             - ./_docker/nginx/ssl:/etc/nginx/ssl
         ports:
-            - 443:443
+            - $NGINX_OUTER_PORT:$NGINX_PORT
+            - $NGINX_PORT_HTTPS:$NGINX_PORT_HTTPS
         depends_on:
             -   dgital_app
 
@@ -18,8 +19,7 @@ services:
         container_name: dgital_app
         build:
             context: .
-            dockerfile: _docker/app/Dockerfile
-#        image: php:8.2-fpm
+            dockerfile: _docker/app/Dockerfile 
         volumes:
             - ./:/var/www
         depends_on:
@@ -29,8 +29,7 @@ services:
 
     dgital_db:
         container_name: dgital_db
-        build: _docker/postgres
-    #    image: "ebitda-pingcrm_ebitda_db"
+        build: _docker/postgres 
         command:
             - "postgres"
             - "-c"
@@ -72,13 +71,7 @@ services:
             - "-c"
             - "log_connections=on"
             - "-c"
-            - "password_encryption=scram-sha-256"
-    #      - "-c"
-    #      - "ssl=on"
-    #      - "-c"
-    #      - "ssl_cert_file=/var/lib/postgresql/data/pgdata/ssl/vmshqebitda01.crt"
-    #      - "-c"
-    #      - "ssl_key_file=/var/lib/postgresql/data/pgdata/ssl/vmshqebitda01.key" 
+            - "password_encryption=scram-sha-256" 
         ports:
             - $DB_OUTER_PORT:$DB_PORT
         environment:
@@ -90,10 +83,7 @@ services:
         volumes:
             - ./_docker/ldap/ldap.conf:/etc/ldap/ldap.conf
             - ./_docker/postgres/data:/var/lib/postgresql/data
-            - ./_docker/postgres/common/postgresql-common.txt:/etc/logrotate.d/postgresql-common.txt
-    #      - ./docker/nginx/ssl:/var/lib/postgresql/data/pgdata/ssl
-    #      - ./docker/postgres/:/var/run/postgresql/
-    #    entrypoint: ["psql", "-h", "/var/run/postgresql", "-c", "SELECT version()"]
+            - ./_docker/postgres/common/postgresql-common.txt:/etc/logrotate.d/postgresql-common.txt 
         healthcheck:
             test: ["CMD-SHELL","pg_isready -U postgres -d dgital"]
             interval: 10s
@@ -129,3 +119,8 @@ services:
                     memory: 1G
         depends_on:
         - dgital_db
+
+networks:
+  default:
+    external:
+      name: projects_default
