@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-    nginx:
-        container_name: example_nginx
+    dgital_nginx:
+        container_name: dgital_nginx
         image: nginx:latest
         volumes:
             - ./:/var/www
@@ -10,10 +10,10 @@ services:
         ports:
             - 8088:80
         depends_on:
-            -   app
+            -   dgital_app
 
-    app:
-        container_name: example_app
+    dgital_app:
+        container_name: dgital_app
         build:
             context: .
             dockerfile: _docker/app/Dockerfile
@@ -21,19 +21,109 @@ services:
         volumes:
             - ./:/var/www
         depends_on:
-            -   db
+            -   dgital_db
         env_file:
             -   .env
 
-    db:
-        container_name: example_db
-        image: mysql:8.0
-        restart: always
-        volumes:
-            -   ./tmp/db:/var/lib/mysql
-        environment:
-            MYSQL_DATABASE: example
-            MYSQL_ROOT_PASSWORD: root
+    dgital_db:
+        container_name: dgital_db
+        build: _docker/postgres
+    #    image: "ebitda-pingcrm_ebitda_db"
+        command:
+            - "postgres"
+            - "-c"
+            - "max_connections=100"
+            - "-c"
+            - "shared_buffers=1GB"
+            - "-c"
+            - "effective_cache_size=4GB"
+            - "-c"
+            - "work_mem=16MB"
+            - "-c"
+            - "maintenance_work_mem=512MB"
+            - "-c"
+            - "random_page_cost=1.1"
+            - "-c"
+            - "temp_file_limit=10GB"
+            - "-c"
+            - "log_min_duration_statement=200ms"
+            - "-c"
+            - "idle_in_transaction_session_timeout=10s"
+            - "-c"
+            - "lock_timeout=60s"
+            - "-c"
+            - "statement_timeout=180s"
+            - "-c"
+            - "shared_preload_libraries=pg_stat_statements"
+            - "-c"
+            - "pg_stat_statements.max=10000"
+            - "-c"
+            - "pg_stat_statements.track=all"
+            - "-c"
+            - "log_statement=all"
+            - "-c"
+            - "log_rotation_age=120d"
+            - "-c"
+            - "log_directory=pg_log"
+            - "-c"
+            - "log_filename=postgresql-%Y-%m-%d_%H%M%S.log"
+            - "-c"
+            - "log_connections=on"
+            - "-c"
+            - "password_encryption=scram-sha-256"
+    #      - "-c"
+    #      - "ssl=on"
+    #      - "-c"
+    #      - "ssl_cert_file=/var/lib/postgresql/data/pgdata/ssl/vmshqebitda01.crt"
+    #      - "-c"
+    #      - "ssl_key_file=/var/lib/postgresql/data/pgdata/ssl/vmshqebitda01.key" 
         ports:
             - $DB_OUTER_PORT:$DB_PORT
-        command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+        environment:
+            POSTGRES_USER: $DB_USERNAME
+            POSTGRES_PASSWORD: $DB_PASSWORD
+            POSTGRES_DB: $DB_DATABASE
+            PGDATA: "/var/lib/postgresql/data/pgdata"
+            TZ: $DB_TIMEZONE
+        volumes:
+            - ./_docker/ldap/ldap.conf:/etc/ldap/ldap.conf
+            - ./_docker/postgres/data:/var/lib/postgresql/data
+            - ./_docker/postgres/common/postgresql-common.txt:/etc/logrotate.d/postgresql-common.txt
+    #      - ./docker/nginx/ssl:/var/lib/postgresql/data/pgdata/ssl
+    #      - ./docker/postgres/:/var/run/postgresql/
+    #    entrypoint: ["psql", "-h", "/var/run/postgresql", "-c", "SELECT version()"]
+        healthcheck:
+            test: ["CMD-SHELL","pg_isready -U postgres -d dgital"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 4G
+
+    
+    dgital_pgadmin:
+        container_name: dgital_pgadmin
+        image: dpage/pgadmin4 
+        environment:
+            PGADMIN_DEFAULT_EMAIL: $PGADMIN_DEFAULT_EMAIL
+            PGADMIN_DEFAULT_PASSWORD: $PGADMIN_PASSWORD
+            PGADMIN_CONFIG_SERVER_MODE: "False"
+            PGADMIN_ENABLE_TLS: "True"
+            PGADMIN_LISTEN_PORT: 9433
+        volumes:
+            - ./_docker/nginx/ssl/dgital.group.crt:/certs/server.cert
+            - ./_docker/nginx/ssl/dgital.group.key:/certs/server.key
+        ports:
+            - 9433:9433
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 1G
+        depends_on:
+        - dgital_db
