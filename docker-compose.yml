@@ -19,7 +19,10 @@ services:
             dockerfile: _docker/app/Dockerfile
 #        image: php:8.2-fpm
         volumes:
-            - ./:/var/www
+            - ./:/var/www:delegated
+            - ./_docker/nginx/conf.d/dgital.group.conf:/etc/nginx/conf.d/dgital.group.conf
+            - ./_docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./_docker/nginx/ssl:/etc/nginx/ssl
         depends_on:
             -   dgital_db
         env_file:
