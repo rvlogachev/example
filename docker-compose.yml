@@ -5,8 +5,10 @@ services:
         container_name: dgital_nginx
         image: nginx:latest
         volumes:
-            - ./:/var/www
-            - ./_docker/nginx/conf.d/:/etc/nginx/conf.d/
+            - ./:/var/www:delegated
+            - ./_docker/nginx/conf.d/dgital.group.conf:/etc/nginx/conf.d/dgital.group.conf
+            - ./_docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./_docker/nginx/ssl:/etc/nginx/ssl
         ports:
             - 8088:80
         depends_on:
@@ -19,10 +21,7 @@ services:
             dockerfile: _docker/app/Dockerfile
 #        image: php:8.2-fpm
         volumes:
-            - ./:/var/www:delegated
-            - ./_docker/nginx/conf.d/dgital.group.conf:/etc/nginx/conf.d/dgital.group.conf
-            - ./_docker/nginx/nginx.conf:/etc/nginx/nginx.conf
-            - ./_docker/nginx/ssl:/etc/nginx/ssl
+            - ./:/var/www
         depends_on:
             -   dgital_db
         env_file:
