@@ -10,8 +10,7 @@ services:
             - ./_docker/nginx/nginx.conf:/etc/nginx/nginx.conf
             - ./_docker/nginx/ssl:/etc/nginx/ssl
         ports:
-            - $NGINX_OUTER_PORT:$NGINX_PORT
-            - $NGINX_PORT_HTTPS:$NGINX_PORT_HTTPS
+            - $NGINX_OUTER_PORT:$NGINX_PORT 
         depends_on:
             -   dgital_app
 
